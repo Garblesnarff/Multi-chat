@@ -8,6 +8,7 @@ def create_app():
                 static_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static'),
                 static_url_path='/static')
     app.config.from_object(Config)
+    app.secret_key = Config.SECRET_KEY
 
     from app import routes
     app.register_blueprint(routes.bp)

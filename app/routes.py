@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, session
 from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider
 
 bp = Blueprint('main', __name__)
@@ -13,16 +13,21 @@ def chat():
     message = data.get('message')
     provider = data.get('provider')
 
-    if provider == 'groq':
-        llm = GroqProvider()
-    elif provider == 'gemini':
-        llm = GeminiProvider()
-    elif provider == 'anthropic':
-        llm = AnthropicProvider()
-    elif provider == 'openai':
-        llm = OpenAIProvider()
-    else:
-        return jsonify({'error': 'Invalid provider'}), 400
+    if 'llm_provider' not in session:
+        session['llm_provider'] = {}
 
+    if provider not in session['llm_provider']:
+        if provider == 'groq':
+            session['llm_provider'][provider] = GroqProvider()
+        elif provider == 'gemini':
+            session['llm_provider'][provider] = GeminiProvider()
+        elif provider == 'anthropic':
+            session['llm_provider'][provider] = AnthropicProvider()
+        elif provider == 'openai':
+            session['llm_provider'][provider] = OpenAIProvider()
+        else:
+            return jsonify({'error': 'Invalid provider'}), 400
+
+    llm = session['llm_provider'][provider]
     response = llm.generate_response(message)
     return jsonify({'response': response})
