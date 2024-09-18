@@ -12,3 +12,21 @@
 .bot-message {
     @apply bg-purple-100 text-purple-800;
 }
+
+/* Comparison styles */
+#comparison-container {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+#comparison-container > div {
+    @apply bg-gray-200 p-4 rounded-lg;
+}
+
+#comparison-container h3 {
+    @apply text-lg font-bold mb-2;
+}
+
+#comparison-container p {
+    @apply bg-white p-2 rounded;
+}

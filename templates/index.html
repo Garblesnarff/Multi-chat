@@ -7,22 +7,35 @@
     <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-8 max-w-3xl w-full">
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-4xl w-full">
         <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Multi-Provider LLM Chatbot</h1>
         <div id="chat-container" class="bg-gray-100 rounded-lg p-4 h-96 overflow-y-auto mb-4"></div>
         <div class="flex space-x-2 mb-4">
-            <select id="provider-select" class="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="groq">Groq</option>
-                <option value="gemini">Gemini</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="openai">OpenAI</option>
-            </select>
+            <div id="provider-checkboxes" class="flex space-x-4">
+                <label class="flex items-center">
+                    <input type="checkbox" value="groq" class="provider-checkbox mr-2">
+                    Groq
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" value="gemini" class="provider-checkbox mr-2">
+                    Gemini
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" value="anthropic" class="provider-checkbox mr-2">
+                    Anthropic
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" value="openai" class="provider-checkbox mr-2">
+                    OpenAI
+                </label>
+            </div>
             <button id="clear-history-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">Clear History</button>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex space-x-2 mb-4">
             <input type="text" id="user-input" class="flex-grow p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type your message...">
             <button id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Send</button>
         </div>
+        <div id="comparison-container" class="hidden bg-gray-100 rounded-lg p-4 mt-4"></div>
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>

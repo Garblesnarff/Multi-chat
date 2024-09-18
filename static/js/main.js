@@ -2,8 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
-    const providerSelect = document.getElementById('provider-select');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
+    const providerCheckboxes = document.querySelectorAll('.provider-checkbox');
+    const comparisonContainer = document.getElementById('comparison-container');
 
     function addMessage(content, isUser = false) {
         const messageDiv = document.createElement('div');
@@ -13,25 +14,47 @@ document.addEventListener('DOMContentLoaded', () => {
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
+    function getSelectedProviders() {
+        return Array.from(providerCheckboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+    }
+
+    function displayComparison(responses) {
+        comparisonContainer.innerHTML = '';
+        comparisonContainer.classList.remove('hidden');
+
+        Object.entries(responses).forEach(([provider, response]) => {
+            const providerDiv = document.createElement('div');
+            providerDiv.classList.add('mb-4');
+            providerDiv.innerHTML = `
+                <h3 class="font-bold text-lg mb-2">${provider.charAt(0).toUpperCase() + provider.slice(1)}</h3>
+                <p class="bg-white rounded p-2">${response}</p>
+            `;
+            comparisonContainer.appendChild(providerDiv);
+        });
+    }
+
     async function sendMessage() {
         const message = userInput.value.trim();
-        if (message) {
+        const selectedProviders = getSelectedProviders();
+
+        if (message && selectedProviders.length > 0) {
             addMessage(message, true);
             userInput.value = '';
 
-            const provider = providerSelect.value;
             try {
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message, provider }),
+                    body: JSON.stringify({ message, providers: selectedProviders }),
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    addMessage(data.response);
+                    displayComparison(data.responses);
                 } else {
                     addMessage('Error: Unable to get a response from the server.');
                 }
@@ -39,30 +62,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error:', error);
                 addMessage('Error: Unable to connect to the server.');
             }
+        } else if (selectedProviders.length === 0) {
+            addMessage('Please select at least one provider.');
         }
     }
 
     async function clearHistory() {
-        const provider = providerSelect.value;
-        try {
-            const response = await fetch('/clear_history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ provider }),
-            });
+        const selectedProviders = getSelectedProviders();
+        for (const provider of selectedProviders) {
+            try {
+                const response = await fetch('/clear_history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ provider }),
+                });
 
-            if (response.ok) {
-                chatContainer.innerHTML = '';
-                addMessage('Conversation history cleared.');
-            } else {
-                addMessage('Error: Unable to clear conversation history.');
+                if (response.ok) {
+                    console.log(`Cleared history for ${provider}`);
+                } else {
+                    console.error(`Failed to clear history for ${provider}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
             }
-        } catch (error) {
-            console.error('Error:', error);
-            addMessage('Error: Unable to connect to the server.');
         }
+
+        chatContainer.innerHTML = '';
+        comparisonContainer.innerHTML = '';
+        comparisonContainer.classList.add('hidden');
+        addMessage('Conversation history cleared.');
     }
 
     sendBtn.addEventListener('click', sendMessage);
