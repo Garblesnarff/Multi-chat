@@ -1,6 +1,8 @@
 import os
 import google.generativeai as genai
 from groq import Groq
+from anthropic import Anthropic
+import openai
 
 class LLMProvider:
     def generate_response(self, message):
@@ -30,3 +32,28 @@ class GeminiProvider(LLMProvider):
     def generate_response(self, message):
         response = self.model.generate_content(message)
         return response.text
+
+class AnthropicProvider(LLMProvider):
+    def __init__(self):
+        self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+
+    def generate_response(self, message):
+        response = self.client.completions.create(
+            model="claude-2",
+            prompt=f"\n\nHuman: {message}\n\nAssistant:",
+            max_tokens_to_sample=300
+        )
+        return response.completion
+
+class OpenAIProvider(LLMProvider):
+    def __init__(self):
+        openai.api_key = os.environ.get('OPENAI_API_KEY')
+
+    def generate_response(self, message):
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": message}
+            ]
+        )
+        return response.choices[0].message.content

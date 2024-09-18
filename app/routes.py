@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
-from app.llm_providers import GroqProvider, GeminiProvider
+from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider
 
 bp = Blueprint('main', __name__)
 
@@ -17,6 +17,10 @@ def chat():
         llm = GroqProvider()
     elif provider == 'gemini':
         llm = GeminiProvider()
+    elif provider == 'anthropic':
+        llm = AnthropicProvider()
+    elif provider == 'openai':
+        llm = OpenAIProvider()
     else:
         return jsonify({'error': 'Invalid provider'}), 400
 
