@@ -1,0 +1,14 @@
+@import 'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css';
+
+/* Custom styles */
+.chat-message {
+    @apply mb-4 p-4 rounded-lg;
+}
+
+.user-message {
+    @apply bg-blue-100 text-blue-800;
+}
+
+.bot-message {
+    @apply bg-purple-100 text-purple-800;
+}
