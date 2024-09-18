@@ -5,21 +5,24 @@ from anthropic import Anthropic
 from openai import OpenAI
 
 class LLMProvider:
-    def __init__(self):
+    def __init__(self, max_history=10):
         self.conversation_history = []
+        self.max_history = max_history
 
     def generate_response(self, message):
         raise NotImplementedError
 
     def add_to_history(self, role, content):
         self.conversation_history.append({"role": role, "content": content})
+        if len(self.conversation_history) > self.max_history:
+            self.conversation_history = self.conversation_history[-self.max_history:]
 
     def get_conversation_history(self):
         return self.conversation_history
 
 class GroqProvider(LLMProvider):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, max_history=10):
+        super().__init__(max_history)
         self.client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 
     def generate_response(self, message):
@@ -33,8 +36,8 @@ class GroqProvider(LLMProvider):
         return response
 
 class GeminiProvider(LLMProvider):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, max_history=10):
+        super().__init__(max_history)
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
         self.model = genai.GenerativeModel('gemini-1.5-flash-8b-exp-0827')
 
@@ -46,8 +49,8 @@ class GeminiProvider(LLMProvider):
         return response.text
 
 class AnthropicProvider(LLMProvider):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, max_history=10):
+        super().__init__(max_history)
         self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
     def generate_response(self, message):
@@ -63,8 +66,8 @@ class AnthropicProvider(LLMProvider):
         return response.completion
 
 class OpenAIProvider(LLMProvider):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, max_history=10):
+        super().__init__(max_history)
         self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
     def generate_response(self, message):

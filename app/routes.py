@@ -31,3 +31,14 @@ def chat():
     llm = session['llm_provider'][provider]
     response = llm.generate_response(message)
     return jsonify({'response': response})
+
+@bp.route('/clear_history', methods=['POST'])
+def clear_history():
+    data = request.json
+    provider = data.get('provider')
+
+    if 'llm_provider' in session and provider in session['llm_provider']:
+        session['llm_provider'][provider].conversation_history = []
+        return jsonify({'message': 'Conversation history cleared'}), 200
+    else:
+        return jsonify({'error': 'Invalid provider or no conversation history'}), 400

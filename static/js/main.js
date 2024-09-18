@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const providerSelect = document.getElementById('provider-select');
+    const clearHistoryBtn = document.getElementById('clear-history-btn');
 
     function addMessage(content, isUser = false) {
         const messageDiv = document.createElement('div');
@@ -41,10 +42,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function clearHistory() {
+        const provider = providerSelect.value;
+        try {
+            const response = await fetch('/clear_history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ provider }),
+            });
+
+            if (response.ok) {
+                chatContainer.innerHTML = '';
+                addMessage('Conversation history cleared.');
+            } else {
+                addMessage('Error: Unable to clear conversation history.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addMessage('Error: Unable to connect to the server.');
+        }
+    }
+
     sendBtn.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendMessage();
         }
     });
+
+    clearHistoryBtn.addEventListener('click', clearHistory);
 });
