@@ -20,18 +20,28 @@ def chat():
     for provider in providers:
         if provider not in session['llm_provider']:
             if provider == 'groq':
-                session['llm_provider'][provider] = GroqProvider()
+                session['llm_provider'][provider] = GroqProvider().to_dict()
             elif provider == 'gemini':
-                session['llm_provider'][provider] = GeminiProvider()
+                session['llm_provider'][provider] = GeminiProvider().to_dict()
             elif provider == 'anthropic':
-                session['llm_provider'][provider] = AnthropicProvider()
+                session['llm_provider'][provider] = AnthropicProvider().to_dict()
             elif provider == 'openai':
-                session['llm_provider'][provider] = OpenAIProvider()
+                session['llm_provider'][provider] = OpenAIProvider().to_dict()
             else:
                 continue
 
-        llm = session['llm_provider'][provider]
+        llm_dict = session['llm_provider'][provider]
+        if provider == 'groq':
+            llm = GroqProvider.from_dict(llm_dict)
+        elif provider == 'gemini':
+            llm = GeminiProvider.from_dict(llm_dict)
+        elif provider == 'anthropic':
+            llm = AnthropicProvider.from_dict(llm_dict)
+        elif provider == 'openai':
+            llm = OpenAIProvider.from_dict(llm_dict)
+        
         responses[provider] = llm.generate_response(message)
+        session['llm_provider'][provider] = llm.to_dict()
 
     return jsonify({'responses': responses})
 
@@ -41,7 +51,14 @@ def clear_history():
     provider = data.get('provider')
 
     if 'llm_provider' in session and provider in session['llm_provider']:
-        session['llm_provider'][provider].conversation_history = []
+        if provider == 'groq':
+            session['llm_provider'][provider] = GroqProvider().to_dict()
+        elif provider == 'gemini':
+            session['llm_provider'][provider] = GeminiProvider().to_dict()
+        elif provider == 'anthropic':
+            session['llm_provider'][provider] = AnthropicProvider().to_dict()
+        elif provider == 'openai':
+            session['llm_provider'][provider] = OpenAIProvider().to_dict()
         return jsonify({'message': 'Conversation history cleared'}), 200
     else:
         return jsonify({'error': 'Invalid provider or no conversation history'}), 400

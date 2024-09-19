@@ -20,6 +20,18 @@ class LLMProvider:
     def get_conversation_history(self):
         return self.conversation_history
 
+    def to_dict(self):
+        return {
+            "max_history": self.max_history,
+            "conversation_history": self.conversation_history
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        provider = cls(max_history=data.get("max_history", 10))
+        provider.conversation_history = data.get("conversation_history", [])
+        return provider
+
 class GroqProvider(LLMProvider):
     def __init__(self, max_history=10):
         super().__init__(max_history)
@@ -29,7 +41,7 @@ class GroqProvider(LLMProvider):
         self.add_to_history("user", message)
         chat_completion = self.client.chat.completions.create(
             messages=self.get_conversation_history(),
-            model="llama3.1-70b-versatile",
+            model="mixtral-8x7b-32768",  # Updated to a valid Groq model
         )
         response = chat_completion.choices[0].message.content
         self.add_to_history("assistant", response)
