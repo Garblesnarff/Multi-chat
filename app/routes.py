@@ -11,13 +11,13 @@ def index():
 def chat():
     data = request.json
     message = data.get('message')
-    providers = data.get('providers', [])
+    providers = data.get('providers', {})
 
     if 'llm_provider' not in session:
         session['llm_provider'] = {}
 
     responses = {}
-    for provider in providers:
+    for provider, model in providers.items():
         if provider not in session['llm_provider']:
             if provider == 'groq':
                 session['llm_provider'][provider] = GroqProvider().to_dict()
@@ -40,7 +40,7 @@ def chat():
         elif provider == 'openai':
             llm = OpenAIProvider.from_dict(llm_dict)
         
-        responses[provider] = llm.generate_response(message)
+        responses[provider] = llm.generate_response(message, model)
         session['llm_provider'][provider] = llm.to_dict()
 
     return jsonify({'responses': responses})

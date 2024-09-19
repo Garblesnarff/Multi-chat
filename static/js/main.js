@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
-    const providerCheckboxes = document.querySelectorAll('.provider-checkbox');
+    const providerSelects = document.querySelectorAll('.provider-select');
     const comparisonContainer = document.getElementById('comparison-container');
 
     function addMessage(content, isUser = false) {
@@ -15,9 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getSelectedProviders() {
-        return Array.from(providerCheckboxes)
-            .filter(checkbox => checkbox.checked)
-            .map(checkbox => checkbox.value);
+        const selectedProviders = {};
+        providerSelects.forEach(select => {
+            if (select.value) {
+                const provider = select.id.split('-')[0];
+                selectedProviders[provider] = select.value;
+            }
+        });
+        return selectedProviders;
     }
 
     function displayComparison(responses) {
@@ -39,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const message = userInput.value.trim();
         const selectedProviders = getSelectedProviders();
 
-        if (message && selectedProviders.length > 0) {
+        if (message && Object.keys(selectedProviders).length > 0) {
             addMessage(message, true);
             userInput.value = '';
 
@@ -62,14 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error:', error);
                 addMessage('Error: Unable to connect to the server.');
             }
-        } else if (selectedProviders.length === 0) {
-            addMessage('Please select at least one provider.');
+        } else if (Object.keys(selectedProviders).length === 0) {
+            addMessage('Please select at least one provider and model.');
         }
     }
 
     async function clearHistory() {
         const selectedProviders = getSelectedProviders();
-        for (const provider of selectedProviders) {
+        for (const provider of Object.keys(selectedProviders)) {
             try {
                 const response = await fetch('/clear_history', {
                     method: 'POST',

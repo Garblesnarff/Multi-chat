@@ -9,7 +9,7 @@ class LLMProvider:
         self.conversation_history = []
         self.max_history = max_history
 
-    def generate_response(self, message):
+    def generate_response(self, message, model):
         raise NotImplementedError
 
     def add_to_history(self, role, content):
@@ -37,11 +37,11 @@ class GroqProvider(LLMProvider):
         super().__init__(max_history)
         self.client = Groq(api_key=os.environ.get('GROQ_API_KEY'))
 
-    def generate_response(self, message):
+    def generate_response(self, message, model):
         self.add_to_history("user", message)
         chat_completion = self.client.chat.completions.create(
             messages=self.get_conversation_history(),
-            model="mixtral-8x7b-32768",  # Updated to a valid Groq model
+            model=model,
         )
         response = chat_completion.choices[0].message.content
         self.add_to_history("assistant", response)
@@ -51,9 +51,8 @@ class GeminiProvider(LLMProvider):
     def __init__(self, max_history=10):
         super().__init__(max_history)
         genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
-        self.model = genai.GenerativeModel('gemini-1.5-flash-8b-exp-0827')
 
-    def generate_response(self, message):
+    def generate_response(self, message, model):
         self.add_to_history("user", message)
         
         # Convert conversation history to Gemini-compatible format
@@ -62,7 +61,8 @@ class GeminiProvider(LLMProvider):
             gemini_history.append({"role": entry['role'], "parts": [{"text": entry['content']}]})
 
         # Create a new chat for each response
-        chat = self.model.start_chat(history=gemini_history)
+        genai_model = genai.GenerativeModel(model)
+        chat = genai_model.start_chat(history=gemini_history)
         response = chat.send_message(message)
         self.add_to_history("assistant", response.text)
         return response.text
@@ -72,12 +72,12 @@ class AnthropicProvider(LLMProvider):
         super().__init__(max_history)
         self.client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
-    def generate_response(self, message):
+    def generate_response(self, message, model):
         self.add_to_history("user", message)
         prompt = "\n\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in self.get_conversation_history()])
         prompt += "\n\nAssistant:"
         response = self.client.completions.create(
-            model="claude-2",
+            model=model,
             prompt=prompt,
             max_tokens_to_sample=300
         )
@@ -89,10 +89,10 @@ class OpenAIProvider(LLMProvider):
         super().__init__(max_history)
         self.client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
-    def generate_response(self, message):
+    def generate_response(self, message, model):
         self.add_to_history("user", message)
         response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=model,
             messages=self.get_conversation_history()
         )
         assistant_response = response.choices[0].message.content

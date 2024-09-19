@@ -11,23 +11,29 @@
         <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Multi-Provider LLM Chatbot</h1>
         <div id="chat-container" class="bg-gray-100 rounded-lg p-4 h-96 overflow-y-auto mb-4"></div>
         <div class="flex space-x-2 mb-4">
-            <div id="provider-checkboxes" class="flex space-x-4">
-                <label class="flex items-center">
-                    <input type="checkbox" value="groq" class="provider-checkbox mr-2">
-                    Groq
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" value="gemini" class="provider-checkbox mr-2">
-                    Gemini
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" value="anthropic" class="provider-checkbox mr-2">
-                    Anthropic
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" value="openai" class="provider-checkbox mr-2">
-                    OpenAI
-                </label>
+            <div id="provider-selects" class="flex space-x-4">
+                <div>
+                    <label for="groq-model" class="block mb-1">Groq Model:</label>
+                    <select id="groq-model" class="provider-select p-2 rounded-lg border border-gray-300">
+                        <option value="">Select Groq Model</option>
+                        <option value="gemma2-9b-it">gemma2-9b-it</option>
+                        <option value="gemma-7b-it">gemma-7b-it</option>
+                        <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+                        <option value="llama-3.1-8b-instant">llama-3.1-8b-instant</option>
+                        <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="gemini-model" class="block mb-1">Gemini Model:</label>
+                    <select id="gemini-model" class="provider-select p-2 rounded-lg border border-gray-300">
+                        <option value="">Select Gemini Model</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                        <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                        <option value="gemini-1.5-pro-exp-0827">gemini-1.5-pro-exp-0827</option>
+                        <option value="gemini-1.5-flash-exp-0827">gemini-1.5-flash-exp-0827</option>
+                        <option value="gemini-1.5-flash-8b-exp-0827">gemini-1.5-flash-8b-exp-0827</option>
+                    </select>
+                </div>
             </div>
             <button id="clear-history-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">Clear History</button>
         </div>
