@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function sendMessage() {
+        console.log('Send button clicked');
         const message = userInput.value.trim();
         const selectedProviders = getSelectedProviders();
         const useReasoning = reasoningCheckbox.checked;
