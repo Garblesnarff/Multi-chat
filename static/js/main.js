@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function sendMessage() {
-        console.log('Send button clicked');
+        console.log('sendMessage function called');
         const message = userInput.value.trim();
         const selectedProviders = getSelectedProviders();
         const useReasoning = reasoningCheckbox.checked;
@@ -103,7 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage('Conversation history cleared.');
     }
 
-    sendBtn.addEventListener('click', sendMessage);
+    sendBtn.addEventListener('click', () => {
+        sendMessage();
+    });
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendMessage();
