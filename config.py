@@ -6,3 +6,4 @@ class Config:
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+    CEREBRAS_API_KEY = os.environ.get('CEREBRAS_API_KEY')

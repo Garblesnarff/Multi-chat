@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, session
-from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider
+from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider, CerebrasProvider
 
 bp = Blueprint('main', __name__)
 
@@ -27,6 +27,8 @@ def chat():
                 session['llm_provider'][provider] = AnthropicProvider().to_dict()
             elif provider == 'openai':
                 session['llm_provider'][provider] = OpenAIProvider().to_dict()
+            elif provider == 'cerebras':
+                session['llm_provider'][provider] = CerebrasProvider().to_dict()
             else:
                 continue
 
@@ -39,6 +41,8 @@ def chat():
             llm = AnthropicProvider.from_dict(llm_dict)
         elif provider == 'openai':
             llm = OpenAIProvider.from_dict(llm_dict)
+        elif provider == 'cerebras':
+            llm = CerebrasProvider.from_dict(llm_dict)
         
         responses[provider] = llm.generate_response(message, model)
         session['llm_provider'][provider] = llm.to_dict()
@@ -59,6 +63,8 @@ def clear_history():
             session['llm_provider'][provider] = AnthropicProvider().to_dict()
         elif provider == 'openai':
             session['llm_provider'][provider] = OpenAIProvider().to_dict()
+        elif provider == 'cerebras':
+            session['llm_provider'][provider] = CerebrasProvider().to_dict()
         return jsonify({'message': 'Conversation history cleared'}), 200
     else:
         return jsonify({'error': 'Invalid provider or no conversation history'}), 400

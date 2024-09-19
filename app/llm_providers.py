@@ -3,6 +3,7 @@ import google.generativeai as genai
 from groq import Groq
 from anthropic import Anthropic
 from openai import OpenAI
+from cerebras.cloud.sdk import Cerebras
 
 class LLMProvider:
     def __init__(self, max_history=10):
@@ -55,12 +56,10 @@ class GeminiProvider(LLMProvider):
     def generate_response(self, message, model):
         self.add_to_history("user", message)
         
-        # Convert conversation history to Gemini-compatible format
         gemini_history = []
         for entry in self.get_conversation_history():
             gemini_history.append({"role": entry['role'], "parts": [{"text": entry['content']}]})
 
-        # Create a new chat for each response
         genai_model = genai.GenerativeModel(model)
         chat = genai_model.start_chat(history=gemini_history)
         response = chat.send_message(message)
@@ -98,3 +97,18 @@ class OpenAIProvider(LLMProvider):
         assistant_response = response.choices[0].message.content
         self.add_to_history("assistant", assistant_response)
         return assistant_response
+
+class CerebrasProvider(LLMProvider):
+    def __init__(self, max_history=10):
+        super().__init__(max_history)
+        self.client = Cerebras(api_key=os.environ.get('CEREBRAS_API_KEY'))
+
+    def generate_response(self, message, model):
+        self.add_to_history("user", message)
+        chat_completion = self.client.chat.completions.create(
+            messages=self.get_conversation_history(),
+            model=model,
+        )
+        response = chat_completion.choices[0].message.content
+        self.add_to_history("assistant", response)
+        return response
