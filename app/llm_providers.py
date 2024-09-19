@@ -1,6 +1,5 @@
 import os
 import google.generativeai as genai
-from google.generativeai.types import content_types
 from groq import Groq
 from anthropic import Anthropic
 from openai import OpenAI
@@ -60,11 +59,9 @@ class GeminiProvider(LLMProvider):
         # Convert conversation history to Gemini-compatible format
         gemini_history = []
         for entry in self.get_conversation_history():
-            if entry['role'] == 'user':
-                gemini_history.append(content_types.Content(role='user', parts=[content_types.Part(text=entry['content'])]))
-            elif entry['role'] == 'assistant':
-                gemini_history.append(content_types.Content(role='model', parts=[content_types.Part(text=entry['content'])]))
+            gemini_history.append({"role": entry['role'], "parts": [{"text": entry['content']}]})
 
+        # Create a new chat for each response
         chat = self.model.start_chat(history=gemini_history)
         response = chat.send_message(message)
         self.add_to_history("assistant", response.text)
