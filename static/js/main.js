@@ -11,9 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const reasoningCheckbox = document.getElementById('reasoning-checkbox');
     const streamingCheckbox = document.getElementById('streaming-checkbox');
 
-    function addMessage(content, isUser = false) {
+    function addMessage(content, isUser = false, isError = false) {
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('chat-message', isUser ? 'user-message' : 'bot-message');
+        if (isError) {
+            messageDiv.classList.add('error-message');
+        }
         messageDiv.textContent = content;
         chatContainer.appendChild(messageDiv);
         chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -39,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             providerDiv.classList.add('mb-4');
             providerDiv.innerHTML = `
                 <h3 class="font-bold text-lg mb-2">${provider.charAt(0).toUpperCase() + provider.slice(1)}</h3>
-                <p class="bg-white rounded p-2">${response}</p>
+                <p class="bg-white rounded p-2 ${response.startsWith('Error:') ? 'text-red-500' : ''}">${response}</p>
             `;
             comparisonContainer.appendChild(providerDiv);
         });
@@ -76,8 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                eventSource.onerror = function() {
+                eventSource.onerror = function(event) {
+                    console.error('EventSource failed:', event);
                     eventSource.close();
+                    addMessage('Error: Unable to get a response from the server.', false, true);
                 };
             } else {
                 try {
@@ -91,17 +96,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (response.ok) {
                         const data = await response.json();
-                        displayComparison(data.responses);
+                        if (data.error) {
+                            addMessage(`Error: ${data.error}`, false, true);
+                        } else {
+                            displayComparison(data.responses);
+                        }
                     } else {
-                        addMessage('Error: Unable to get a response from the server.');
+                        const errorData = await response.json();
+                        addMessage(`Error: ${errorData.error || 'Unable to get a response from the server.'}`, false, true);
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    addMessage('Error: Unable to connect to the server.');
+                    addMessage('Error: Unable to connect to the server.', false, true);
                 }
             }
         } else if (Object.keys(selectedProviders).length === 0) {
-            addMessage('Please select at least one provider and model.');
+            addMessage('Please select at least one provider and model.', false, true);
         }
     }
 
@@ -121,9 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log(`Cleared history for ${provider}`);
                 } else {
                     console.error(`Failed to clear history for ${provider}`);
+                    const errorData = await response.json();
+                    addMessage(`Error clearing history for ${provider}: ${errorData.error}`, false, true);
                 }
             } catch (error) {
                 console.error('Error:', error);
+                addMessage(`Error clearing history for ${provider}: ${error.message}`, false, true);
             }
         }
 
