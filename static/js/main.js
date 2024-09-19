@@ -1,4 +1,7 @@
+console.log('main.js loaded');
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -44,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessage() {
         console.log('sendMessage function called');
         const message = userInput.value.trim();
+        console.log('User input:', message);
         const selectedProviders = getSelectedProviders();
         const useReasoning = reasoningCheckbox.checked;
 
@@ -104,10 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     sendBtn.addEventListener('click', () => {
+        console.log('Send button clicked');
         sendMessage();
     });
+    
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
+            console.log('Enter key pressed');
             sendMessage();
         }
     });
