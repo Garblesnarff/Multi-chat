@@ -1,5 +1,6 @@
 import os
 import google.generativeai as genai
+from google.generativeai.types import content_types
 from groq import Groq
 from anthropic import Anthropic
 from openai import OpenAI
@@ -60,9 +61,9 @@ class GeminiProvider(LLMProvider):
         gemini_history = []
         for entry in self.get_conversation_history():
             if entry['role'] == 'user':
-                gemini_history.append(genai.types.Content(parts=[genai.types.Part(text=entry['content'])], role='user'))
+                gemini_history.append(content_types.Content(role='user', parts=[content_types.Part(text=entry['content'])]))
             elif entry['role'] == 'assistant':
-                gemini_history.append(genai.types.Content(parts=[genai.types.Part(text=entry['content'])], role='model'))
+                gemini_history.append(content_types.Content(role='model', parts=[content_types.Part(text=entry['content'])]))
 
         chat = self.model.start_chat(history=gemini_history)
         response = chat.send_message(message)
