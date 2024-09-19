@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, Response, stream_with_context
 from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider, CerebrasProvider
 
 bp = Blueprint('main', __name__)
@@ -13,6 +13,7 @@ def chat():
     message = data.get('message')
     providers = data.get('providers', {})
     use_reasoning = data.get('use_reasoning', False)
+    use_streaming = data.get('use_streaming', False)
 
     if 'llm_provider' not in session:
         session['llm_provider'] = {}
@@ -45,13 +46,25 @@ def chat():
         elif provider == 'cerebras':
             llm = CerebrasProvider.from_dict(llm_dict)
         
-        if use_reasoning:
-            responses[provider] = llm.generate_response_with_reasoning(message, model)
+        if use_streaming:
+            responses[provider] = llm.generate_stream(message, model)
         else:
-            responses[provider] = llm.generate_response(message, model)
+            if use_reasoning:
+                responses[provider] = llm.generate_response_with_reasoning(message, model)
+            else:
+                responses[provider] = llm.generate_response(message, model)
         session['llm_provider'][provider] = llm.to_dict()
 
-    return jsonify({'responses': responses})
+    if use_streaming:
+        def generate():
+            for provider, response in responses.items():
+                yield f"data: {provider}\n\n"
+                for chunk in response.response:
+                    yield f"data: {chunk}\n\n"
+                yield "data: [DONE]\n\n"
+        return Response(stream_with_context(generate()), content_type='text/event-stream')
+    else:
+        return jsonify({'responses': responses})
 
 @bp.route('/clear_history', methods=['POST'])
 def clear_history():

@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const providerSelects = document.querySelectorAll('.provider-select');
     const comparisonContainer = document.getElementById('comparison-container');
     const reasoningCheckbox = document.getElementById('reasoning-checkbox');
+    const streamingCheckbox = document.getElementById('streaming-checkbox');
 
     function addMessage(content, isUser = false) {
         const messageDiv = document.createElement('div');
@@ -50,29 +51,54 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('User input:', message);
         const selectedProviders = getSelectedProviders();
         const useReasoning = reasoningCheckbox.checked;
+        const useStreaming = streamingCheckbox.checked;
 
         if (message && Object.keys(selectedProviders).length > 0) {
             addMessage(message, true);
             userInput.value = '';
 
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ message, providers: selectedProviders, use_reasoning: useReasoning }),
-                });
+            if (useStreaming) {
+                const eventSource = new EventSource(`/chat?message=${encodeURIComponent(message)}&providers=${encodeURIComponent(JSON.stringify(selectedProviders))}&use_reasoning=${useReasoning}&use_streaming=true`);
+                
+                let currentProvider = '';
+                let currentResponse = '';
 
-                if (response.ok) {
-                    const data = await response.json();
-                    displayComparison(data.responses);
-                } else {
-                    addMessage('Error: Unable to get a response from the server.');
+                eventSource.onmessage = function(event) {
+                    if (event.data === '[DONE]') {
+                        displayComparison({ [currentProvider]: currentResponse });
+                        currentProvider = '';
+                        currentResponse = '';
+                    } else if (currentProvider === '') {
+                        currentProvider = event.data;
+                    } else {
+                        currentResponse += event.data;
+                        displayComparison({ [currentProvider]: currentResponse });
+                    }
+                };
+
+                eventSource.onerror = function() {
+                    eventSource.close();
+                };
+            } else {
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message, providers: selectedProviders, use_reasoning: useReasoning, use_streaming: useStreaming }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        displayComparison(data.responses);
+                    } else {
+                        addMessage('Error: Unable to get a response from the server.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    addMessage('Error: Unable to connect to the server.');
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                addMessage('Error: Unable to connect to the server.');
             }
         } else if (Object.keys(selectedProviders).length === 0) {
             addMessage('Please select at least one provider and model.');
