@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const message = userInput.value.trim();
         console.log('User input:', message);
         const selectedProviders = getSelectedProviders();
-        const useReasoning = reasoningCheckbox.checked;
-        const useStreaming = streamingCheckbox.checked;
+        const useReasoning = reasoningCheckbox && reasoningCheckbox.checked;
+        const useStreaming = streamingCheckbox && streamingCheckbox.checked;
 
         if (message && Object.keys(selectedProviders).length > 0) {
             addMessage(message, true);
