@@ -12,6 +12,7 @@ def chat():
     data = request.json
     message = data.get('message')
     providers = data.get('providers', {})
+    use_reasoning = data.get('use_reasoning', False)
 
     if 'llm_provider' not in session:
         session['llm_provider'] = {}
@@ -44,7 +45,10 @@ def chat():
         elif provider == 'cerebras':
             llm = CerebrasProvider.from_dict(llm_dict)
         
-        responses[provider] = llm.generate_response(message, model)
+        if use_reasoning:
+            responses[provider] = llm.generate_response_with_reasoning(message, model)
+        else:
+            responses[provider] = llm.generate_response(message, model)
         session['llm_provider'][provider] = llm.to_dict()
 
     return jsonify({'responses': responses})

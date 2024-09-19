@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearHistoryBtn = document.getElementById('clear-history-btn');
     const providerSelects = document.querySelectorAll('.provider-select');
     const comparisonContainer = document.getElementById('comparison-container');
+    const reasoningCheckbox = document.getElementById('reasoning-checkbox');
 
     function addMessage(content, isUser = false) {
         const messageDiv = document.createElement('div');
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function sendMessage() {
         const message = userInput.value.trim();
         const selectedProviders = getSelectedProviders();
+        const useReasoning = reasoningCheckbox.checked;
 
         if (message && Object.keys(selectedProviders).length > 0) {
             addMessage(message, true);
@@ -54,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ message, providers: selectedProviders }),
+                    body: JSON.stringify({ message, providers: selectedProviders, use_reasoning: useReasoning }),
                 });
 
                 if (response.ok) {
