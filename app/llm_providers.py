@@ -55,7 +55,16 @@ class GeminiProvider(LLMProvider):
 
     def generate_response(self, message):
         self.add_to_history("user", message)
-        chat = self.model.start_chat(history=self.get_conversation_history())
+        
+        # Convert conversation history to Gemini-compatible format
+        gemini_history = []
+        for entry in self.get_conversation_history():
+            if entry['role'] == 'user':
+                gemini_history.append(genai.types.Content(parts=[genai.types.Part(text=entry['content'])], role='user'))
+            elif entry['role'] == 'assistant':
+                gemini_history.append(genai.types.Content(parts=[genai.types.Part(text=entry['content'])], role='model'))
+
+        chat = self.model.start_chat(history=gemini_history)
         response = chat.send_message(message)
         self.add_to_history("assistant", response.text)
         return response.text
