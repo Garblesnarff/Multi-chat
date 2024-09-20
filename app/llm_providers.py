@@ -87,7 +87,10 @@ class GeminiProvider(LLMProvider):
             
             gemini_history = []
             for entry in self.get_conversation_history():
-                gemini_history.append({"role": entry['role'], "parts": [{"text": entry['content']}]})
+                if entry['role'] == 'user':
+                    gemini_history.append({"role": "user", "parts": [{"text": entry['content']}]})
+                elif entry['role'] == 'assistant':
+                    gemini_history.append({"role": "model", "parts": [{"text": entry['content']}]})
 
             genai_model = genai.GenerativeModel(model)
             chat = genai_model.start_chat(history=gemini_history)
@@ -104,7 +107,10 @@ class GeminiProvider(LLMProvider):
             
             gemini_history = []
             for entry in self.get_conversation_history():
-                gemini_history.append({"role": entry['role'], "parts": [{"text": entry['content']}]})
+                if entry['role'] == 'user':
+                    gemini_history.append({"role": "user", "parts": [{"text": entry['content']}]})
+                elif entry['role'] == 'assistant':
+                    gemini_history.append({"role": "model", "parts": [{"text": entry['content']}]})
 
             genai_model = genai.GenerativeModel(model)
             chat = genai_model.start_chat(history=gemini_history)
