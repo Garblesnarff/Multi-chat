@@ -60,60 +60,34 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(message, true);
             userInput.value = '';
 
-            if (useStreaming) {
-                const eventSource = new EventSource(`/chat?message=${encodeURIComponent(message)}&providers=${encodeURIComponent(JSON.stringify(selectedProviders))}&use_reasoning=${useReasoning}&use_streaming=true`);
-                
-                let currentProvider = '';
-                let currentResponse = '';
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message, 
+                        providers: selectedProviders, 
+                        use_reasoning: useReasoning, 
+                        use_streaming: useStreaming 
+                    }),
+                });
 
-                eventSource.onmessage = function(event) {
-                    if (event.data === '[DONE]') {
-                        displayComparison({ [currentProvider]: currentResponse });
-                        currentProvider = '';
-                        currentResponse = '';
-                    } else if (currentProvider === '') {
-                        currentProvider = event.data;
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.error) {
+                        addMessage(`Error: ${data.error}`, false, true);
                     } else {
-                        currentResponse += event.data;
-                        displayComparison({ [currentProvider]: currentResponse });
+                        displayComparison(data.responses);
                     }
-                };
-
-                eventSource.onerror = function(event) {
-                    console.error('EventSource failed:', event);
-                    eventSource.close();
-                    addMessage('Error: Unable to get a response from the server.', false, true);
-                };
-            } else {
-                try {
-                    const response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                            message, 
-                            providers: selectedProviders, 
-                            use_reasoning: useReasoning, 
-                            use_streaming: useStreaming 
-                        }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.error) {
-                            addMessage(`Error: ${data.error}`, false, true);
-                        } else {
-                            displayComparison(data.responses);
-                        }
-                    } else {
-                        const errorData = await response.json();
-                        addMessage(`Error: ${errorData.error || 'Unable to get a response from the server.'}`, false, true);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    addMessage('Error: Unable to connect to the server.', false, true);
+                } else {
+                    const errorData = await response.json();
+                    addMessage(`Error: ${errorData.error || 'Unable to get a response from the server.'}`, false, true);
                 }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Error: Unable to connect to the server.', false, true);
             }
         } else if (Object.keys(selectedProviders).length === 0) {
             addMessage('Please select at least one provider and model.', false, true);
