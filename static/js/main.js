@@ -91,7 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ message, providers: selectedProviders, use_reasoning: useReasoning, use_streaming: useStreaming }),
+                        body: JSON.stringify({ 
+                            message, 
+                            providers: selectedProviders, 
+                            use_reasoning: useReasoning, 
+                            use_streaming: useStreaming 
+                        }),
                     });
 
                     if (response.ok) {
@@ -146,17 +151,23 @@ document.addEventListener('DOMContentLoaded', () => {
         addMessage('Conversation history cleared.');
     }
 
-    sendBtn.addEventListener('click', () => {
-        console.log('Send button clicked');
-        sendMessage();
-    });
-    
-    userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            console.log('Enter key pressed');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+            console.log('Send button clicked');
             sendMessage();
-        }
-    });
+        });
+    }
+    
+    if (userInput) {
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed');
+                sendMessage();
+            }
+        });
+    }
 
-    clearHistoryBtn.addEventListener('click', clearHistory);
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', clearHistory);
+    }
 });

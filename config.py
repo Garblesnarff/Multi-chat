@@ -7,3 +7,9 @@ class Config:
     ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     CEREBRAS_API_KEY = os.environ.get('CEREBRAS_API_KEY')
+
+    @classmethod
+    def get_cerebras_api_key(cls):
+        if cls.CEREBRAS_API_KEY is None:
+            raise ValueError("CEREBRAS_API_KEY is not set in the environment variables")
+        return cls.CEREBRAS_API_KEY
