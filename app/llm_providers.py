@@ -4,7 +4,6 @@ from groq import Groq
 from anthropic import Anthropic
 from openai import OpenAI
 from cerebras.cloud.sdk import Cerebras
-from flask import stream_with_context, Response
 import logging
 
 logger = logging.getLogger(__name__)
@@ -95,32 +94,30 @@ class GroqProvider(LLMProvider):
                     model=model,
                     stream=True,
                 )
+                yield "Reasoning:\n"
+                for chunk in reasoning_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+
                 final_prompt = f"Based on the reasoning, provide a final response."
                 final_stream = self.client.chat.completions.create(
                     messages=[{"role": "user", "content": final_prompt}],
                     model=model,
                     stream=True,
                 )
-                def event_stream():
-                    yield "Reasoning:\n"
-                    for chunk in reasoning_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-                    yield "\n\nFinal Response:\n"
-                    for chunk in final_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
+                yield "\n\nFinal Response:\n"
+                for chunk in final_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
             else:
                 stream = self.client.chat.completions.create(
                     messages=self.get_conversation_history(),
                     model=model,
                     stream=True,
                 )
-                def event_stream():
-                    for chunk in stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-            return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
         except Exception as e:
             logger.error(f"Error in GroqProvider.generate_stream: {str(e)}")
             raise
@@ -180,26 +177,23 @@ class GeminiProvider(LLMProvider):
 
             genai_model = genai.GenerativeModel(model)
             
-            def event_stream():
-                if use_reasoning:
-                    reasoning_prompt = f"Reason step-by-step about the following message: {message}"
-                    yield "Reasoning:\n"
-                    for chunk in genai_model.generate_content(reasoning_prompt, stream=True):
-                        if chunk.text:
-                            yield chunk.text
-                    
-                    final_prompt = f"Based on the reasoning, provide a final response."
-                    yield "\n\nFinal Response:\n"
-                    for chunk in genai_model.generate_content(final_prompt, stream=True):
-                        if chunk.text:
-                            yield chunk.text
-                else:
-                    chat = genai_model.start_chat(history=gemini_history)
-                    for chunk in chat.send_message(message, stream=True):
-                        if chunk.text:
-                            yield chunk.text
-            
-            return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+            if use_reasoning:
+                reasoning_prompt = f"Reason step-by-step about the following message: {message}"
+                yield "Reasoning:\n"
+                for chunk in genai_model.generate_content(reasoning_prompt, stream=True):
+                    if chunk.text:
+                        yield chunk.text
+                
+                final_prompt = f"Based on the reasoning, provide a final response."
+                yield "\n\nFinal Response:\n"
+                for chunk in genai_model.generate_content(final_prompt, stream=True):
+                    if chunk.text:
+                        yield chunk.text
+            else:
+                chat = genai_model.start_chat(history=gemini_history)
+                for chunk in chat.send_message(message, stream=True):
+                    if chunk.text:
+                        yield chunk.text
         except Exception as e:
             logger.error(f"Error in GeminiProvider.generate_stream: {str(e)}")
             raise
@@ -259,6 +253,11 @@ class AnthropicProvider(LLMProvider):
                     max_tokens_to_sample=300,
                     stream=True
                 )
+                yield "Reasoning:\n"
+                for completion in reasoning_stream:
+                    if completion.completion:
+                        yield completion.completion
+
                 final_prompt = f"Based on the reasoning, provide a final response.\n\nAssistant:"
                 final_stream = self.client.completions.create(
                     model=model,
@@ -266,15 +265,10 @@ class AnthropicProvider(LLMProvider):
                     max_tokens_to_sample=300,
                     stream=True
                 )
-                def event_stream():
-                    yield "Reasoning:\n"
-                    for completion in reasoning_stream:
-                        if completion.completion:
-                            yield completion.completion
-                    yield "\n\nFinal Response:\n"
-                    for completion in final_stream:
-                        if completion.completion:
-                            yield completion.completion
+                yield "\n\nFinal Response:\n"
+                for completion in final_stream:
+                    if completion.completion:
+                        yield completion.completion
             else:
                 prompt = "\n\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in self.get_conversation_history()])
                 prompt += "\n\nAssistant:"
@@ -284,11 +278,9 @@ class AnthropicProvider(LLMProvider):
                     max_tokens_to_sample=300,
                     stream=True
                 )
-                def event_stream():
-                    for completion in stream:
-                        if completion.completion:
-                            yield completion.completion
-            return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                for completion in stream:
+                    if completion.completion:
+                        yield completion.completion
         except Exception as e:
             logger.error(f"Error in AnthropicProvider.generate_stream: {str(e)}")
             raise
@@ -343,32 +335,30 @@ class OpenAIProvider(LLMProvider):
                     messages=[{"role": "user", "content": reasoning_prompt}],
                     stream=True
                 )
+                yield "Reasoning:\n"
+                for chunk in reasoning_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+
                 final_prompt = f"Based on the reasoning, provide a final response."
                 final_stream = self.client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": final_prompt}],
                     stream=True
                 )
-                def event_stream():
-                    yield "Reasoning:\n"
-                    for chunk in reasoning_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-                    yield "\n\nFinal Response:\n"
-                    for chunk in final_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
+                yield "\n\nFinal Response:\n"
+                for chunk in final_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
             else:
                 stream = self.client.chat.completions.create(
                     model=model,
                     messages=self.get_conversation_history(),
                     stream=True
                 )
-                def event_stream():
-                    for chunk in stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-            return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
         except Exception as e:
             logger.error(f"Error in OpenAIProvider.generate_stream: {str(e)}")
             raise
@@ -425,32 +415,30 @@ class CerebrasProvider(LLMProvider):
                     model=model,
                     stream=True,
                 )
+                yield "Reasoning:\n"
+                for chunk in reasoning_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
+
                 final_prompt = f"Based on the reasoning, provide a final response."
                 final_stream = self.client.chat.completions.create(
                     messages=[{"role": "user", "content": final_prompt}],
                     model=model,
                     stream=True,
                 )
-                def event_stream():
-                    yield "Reasoning:\n"
-                    for chunk in reasoning_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-                    yield "\n\nFinal Response:\n"
-                    for chunk in final_stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
+                yield "\n\nFinal Response:\n"
+                for chunk in final_stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
             else:
                 stream = self.client.chat.completions.create(
                     messages=self.get_conversation_history(),
                     model=model,
                     stream=True,
                 )
-                def event_stream():
-                    for chunk in stream:
-                        if chunk.choices[0].delta.content is not None:
-                            yield chunk.choices[0].delta.content
-            return Response(stream_with_context(event_stream()), content_type='text/event-stream')
+                for chunk in stream:
+                    if chunk.choices[0].delta.content is not None:
+                        yield chunk.choices[0].delta.content
         except Exception as e:
             logger.error(f"Error in CerebrasProvider.generate_stream: {str(e)}")
             raise
