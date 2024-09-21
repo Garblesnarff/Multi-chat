@@ -48,23 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function displayStreamingResponse(provider, content) {
-        let providerDiv = document.getElementById(`streaming-${provider}`);
-        if (!providerDiv) {
-            providerDiv = document.createElement('div');
-            providerDiv.id = `streaming-${provider}`;
-            providerDiv.classList.add('mb-4');
-            providerDiv.innerHTML = `
-                <h3 class="font-bold text-lg mb-2">${provider.charAt(0).toUpperCase() + provider.slice(1)}</h3>
-                <p class="bg-white rounded p-2"></p>
-            `;
-            comparisonContainer.appendChild(providerDiv);
-        }
-        const responseP = providerDiv.querySelector('p');
-        responseP.textContent += content;
-        comparisonContainer.scrollTop = comparisonContainer.scrollHeight;
-    }
-
     async function sendMessage() {
         console.log('sendMessage function called');
         const message = userInput.value.trim();
@@ -80,17 +63,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (useStreaming) {
                 comparisonContainer.innerHTML = '';
                 comparisonContainer.classList.remove('hidden');
+                
                 const eventSource = new EventSource(`/chat?message=${encodeURIComponent(message)}&providers=${encodeURIComponent(JSON.stringify(selectedProviders))}&use_reasoning=${useReasoning}&use_streaming=true`);
                 
                 let currentProvider = '';
+                let providerResponses = {};
 
                 eventSource.onmessage = function(event) {
                     if (event.data === '[DONE]') {
-                        eventSource.close();
+                        currentProvider = '';
                     } else if (currentProvider === '') {
                         currentProvider = event.data;
+                        if (!providerResponses[currentProvider]) {
+                            providerResponses[currentProvider] = '';
+                            const providerDiv = document.createElement('div');
+                            providerDiv.id = `streaming-${currentProvider}`;
+                            providerDiv.innerHTML = `
+                                <h3 class="font-bold text-lg mb-2">${currentProvider.charAt(0).toUpperCase() + currentProvider.slice(1)}</h3>
+                                <p class="bg-white rounded p-2"></p>
+                            `;
+                            comparisonContainer.appendChild(providerDiv);
+                        }
                     } else {
-                        displayStreamingResponse(currentProvider, event.data);
+                        providerResponses[currentProvider] += event.data;
+                        const providerDiv = document.getElementById(`streaming-${currentProvider}`);
+                        if (providerDiv) {
+                            const responseP = providerDiv.querySelector('p');
+                            responseP.textContent = providerResponses[currentProvider];
+                        }
                     }
                 };
 
