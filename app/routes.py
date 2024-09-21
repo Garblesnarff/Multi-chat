@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, session, Response, stream_with_context
 from app.llm_providers import GroqProvider, GeminiProvider, AnthropicProvider, OpenAIProvider, CerebrasProvider
 import logging
+import json
 
 bp = Blueprint('main', __name__)
 
@@ -18,7 +19,7 @@ def chat():
         if request.method == 'GET':
             # Handle streaming request
             message = request.args.get('message')
-            providers = request.args.get('providers')
+            providers = json.loads(request.args.get('providers'))
             use_reasoning = request.args.get('use_reasoning') == 'true'
             use_streaming = request.args.get('use_streaming') == 'true'
         else:
@@ -36,12 +37,16 @@ def chat():
 
         if use_streaming:
             def generate():
-                for provider, model in providers.items():
-                    yield f"data: {provider}\n\n"
-                    llm = get_llm_provider(provider)
-                    for chunk in llm.generate_stream(message, model, use_reasoning):
-                        yield f"data: {chunk}\n\n"
-                    yield "data: [DONE]\n\n"
+                try:
+                    for provider, model in providers.items():
+                        yield f"data: {provider}\n\n"
+                        llm = get_llm_provider(provider)
+                        for chunk in llm.generate_stream(message, model, use_reasoning):
+                            yield f"data: {chunk}\n\n"
+                        yield "data: [DONE]\n\n"
+                except Exception as e:
+                    logger.error(f"Error in generate function: {str(e)}")
+                    yield f"data: Error: {str(e)}\n\n"
             return Response(stream_with_context(generate()), content_type='text/event-stream')
         else:
             responses = {}
@@ -60,7 +65,12 @@ def chat():
             return jsonify({'responses': responses})
     except Exception as e:
         logger.error(f"Unexpected error in chat route: {str(e)}")
-        return jsonify({'error': 'An unexpected error occurred'}), 500
+        if use_streaming:
+            def generate():
+                yield f"data: Error: {str(e)}\n\n"
+            return Response(stream_with_context(generate()), content_type='text/event-stream')
+        else:
+            return jsonify({'error': str(e)}), 500
 
 @bp.route('/clear_history', methods=['POST'])
 def clear_history():
